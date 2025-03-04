@@ -1,0 +1,80 @@
+Elektronika – dziedzina techniki zajmująca się wytwarzaniem i przetwarzaniem sygnałów w postaci prądów i napięć elektrycznych lub pól elektromagnetycznych. Wykorzystywanie zjawisk oddziaływania pomiędzy ładunkami do przenoszenia informacji.
+
+
+== Etymologia ==
+Elektronika (z gr. elektron 'bursztyn, który można naelektryzować przez potarcie’ i -ikos 'na sposób; odnoszący się do’)
+
+
+== Podstawy ==
+
+Jest to dziedzina techniki i nauki zajmująca się obwodami elektrycznymi zawierającymi, obok elementów elektronicznych biernych, elementy aktywne takie jak lampy próżniowe, tranzystory i diody. W obwodach takich można wzmacniać słabe sygnały dzięki nieliniowym charakterystykom elementów czynnych (i ich możliwościom sterowania przepływem elektronów). Podobnie możliwość pracy urządzeń jako przełączniki pozwala na przetwarzanie sygnałów cyfrowych.
+Swój rozwój elektronika zawdzięcza badaniom w różnych dziedzinach nauki, głównie fizyce (elektromagnetyzm, fizyka ciała stałego – szczególnie półprzewodniki) i matematyce (modele matematyczne obwodów i sygnałów).
+W odróżnieniu od elektrotechniki, która też bazuje na wiedzy z zakresu elektromagnetyzmu, elektronika nie zajmuje się ogólnie rzecz biorąc zagadnieniami energii elektrycznej, ale zagadnieniami związanymi z sygnałami (zob. też przetwarzanie sygnałów). Rozróżnienie obu dyscyplin nastąpiło około 1906 roku, kiedy to Lee De Forest wynalazł triodę, dzięki której bez użycia urządzeń mechanicznych można było już wówczas wzmacniać urządzeniem elektrycznym słabe sygnały radiowe lub akustyczne. Do lat 50. XX wieku dziedzina ta sprowadzała się do radiotechniki (tak ją nazywano) – a jej zasadnicze zastosowania obejmowały projektowanie nadajników, odbiorników i lamp próżniowych. Historycznie elektronika wyrosła więc z radiotechniki – pierwszymi układami elektronicznymi były powstające w czasach I wojny światowej nadajniki i odbiorniki radiowe. Współcześnie większość urządzeń elektronicznych projektuje się z użyciem elementów półprzewodnikowych, za pomocą których można sterować przepływem elektronów podobnie jak w lampach elektronowych, a układy elektroniczne implementowane są często jako układy scalone (tzw. mikroelektronika, zob. też nanoelektronika) w tym układy programowalne i układy specjalizowane.
+
+
+== Klasyfikacja dziedziny elektroniki ==
+
+Elektronika powszechnego użytku (w tym programowalne układy cyfrowe, multimedia, systemy nadzoru wizyjnego)
+Elektronika przemysłowa (w tym energoelektronika, elektroniczne układy technologiczne, automatyka przemysłowa i sterowniki PLC, systemy sterowania, napędy precyzyjnie, elektronika medyczna, procesory sygnałowe DSP)
+Radioelektronika (w tym także układy elektroniki morskiej, radiokomunikacja i technika radarowa, technika mikrofalowa)
+Mikroelektronika, mikrosystemy, fotonika i nanotechnologie (wytwarzanie i zastosowania)
+Akustyka, elektroakustyka, systemy estradowe i inżynieria dźwięku
+
+
+== Typy układów elektronicznych ==
+W zależności od interpretacji znaczenia przetwarzanego sygnału układy dzieli się na:
+
+układy elektroniczne analogowe – opisuje je technika analogowa, analogowe przetwarzanie sygnałów
+liniowe,
+nieliniowe (np. generator drgań, pętla fazowa, modulator, demodulator, prostownik, stabilizator),
+układy elektroniczne cyfrowe – opisuje je technika cyfrowa i oparta na niej technika mikroprocesorowa
+układy cyfrowe kombinacyjne - stan wyjść zależy tylko od bieżących stanów wejść,
+układy cyfrowe sekwencyjne - stan wyjść zależy od stanu obecnego wejść oraz wejść w stanach poprzednich.
+
+
+== Elementy elektroniki ==
+Do konstrukcji urządzeń elektronicznych służą różnorodne przyrządy i układy:
+
+elementy aktywne: półprzewodnikowe (tranzystory, tyrystory, układy scalone, diody półprzewodnikowe itp.), lampy próżniowe (diody, triody, pentody itd.)
+elementy bierne: rezystory, kondensatory, cewki.
+elementy akustoelektroniczne: filtry, rezonatory, linie opóźniające, czujniki itp.
+elementy optoelektroniczne: lasery, światłowody, detektory promieniowania itp.
+elementy fotoniczne (łączące elementy akustoelektroniczne z optoelektronicznymi): modulatory, wzmacniacze, detektory itp.
+Elementy elektroniczne często montuje się z użyciem obwodów drukowanych.
+
+
+== Wybrane zastosowania ==
+urządzenia pomiarowe
+elektroniczne systemy medyczne (zob. inżynieria biomedyczna) i środowiskowe (zob. monitoring)
+inżynieria dźwięku (zob. też elektroakustyka, sonar)
+telekomunikacja – radiokomunikacja (także mobilna, komórkowa oraz radiolokacja i radionawigacja), teletransmisja i telewizja, sieci telekomunikacyjne i teleinformatyczne (także satelitarne – zob. satelita telekomunikacyjny, antena satelitarna)
+inżynieria komputerowa
+urządzenia automatyki
+układy elektroniki przemysłowej
+agrotronika
+technika mikrofal i elektronika bardzo wysokich częstotliwości
+kompatybilność elektromagnetyczna
+
+
+== Przypisy ==
+
+
+== Bibliografia ==
+Horowitz P., Hill W.: Sztuka elektroniki. Tom 1 i 2. Wydawnictwa Komunikacji i Łączności, WKŁ 2018
+Gray P.E., Searle C.L.: Podstawy elektroniki, PWN, 1974
+Z. Jaczewski, A. Opolski, J. Stolz: Podstawy elektroniki i energoelektroniki, PWN 1981
+Mikołajuk K.: Podstawy analizy obwodów energoelektronicznych. Warszawa, PWN 1998
+A. Guziński: Liniowe elektroniczne układy analogowe, WNT 1995
+Moeschke B., Pilawski M.: Pracownia elektroniczna cz.I i cz.II, WSziP 1980
+Atwood K., W., Alley Ch., L., Elementy i układy półprzewodnikowe, WNT 1984
+Nadachowski M., Kulka Z.: Analogowe układy scalone, WKŁ 1985
+Miłek M.: Elektronika analogowa, Wyd. WSInż w Zielonej Górze, 1990
+J. Chabłowski, W. Skulimowski: Elektronika w pytaniach i odpowiedziach, WN-T, Warszawa 1982
+Korzec Z., Kacprzak T.: Tranzystory polowe złączowe, WNT, 1984
+F. Przezdziecki: Elektrotechnika i elektronika, PWN, Warszawa 1982
+Badźmirowski K. i inni: Pomiary przyrządów półprzewodnikowych, WKK 1984
+J. Watson: Elektronika, WKiŁ, Warszawa 2006
+Holms D. G., Lipo T. A.: Pulse width modulation for power converters. Principle and practice. IEEE press. New York
+Kaźmierkowski M.: Podstawy elektroniki i energoelektroniki, Wyd. OWPW, Warszawa 1996
+Fedyczak Z.: Impulsowe układy transformujące napięcia przemienne, Wyd. OWUZ, Zielona Góra 2003
+Kaźmierkowski M. Matysik J.: Wprowadzenie do elektroniki i energoelektroniki, Wyd. OWPW, Warszawa 2005
