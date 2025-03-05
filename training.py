@@ -1,114 +1,136 @@
-import tensorflow as tf
-from transformers import BertTokenizerFast, TFBertForQuestionAnswering
+import os
 import re
+import tensorflow as tf
+from tensorflow.keras.callbacks import EarlyStopping
+from fuzzywuzzy import process
+from transformers import AutoTokenizer, TFAutoModelForMaskedLM, AdamWeightDecay
 
-# Inicjalizacja tokenizera i modelu
-tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
-model = TFBertForQuestionAnswering.from_pretrained("bert-base-uncased")
-
-# Wczytanie tekstu z pliku
+# Wczytywanie artykułu z pliku
 with open("files/elektronika.txt", 'r', encoding='utf-8') as file:
-    context = file.read()
+    article = file.read()
 
-# Dane treningowe (przykładowe pytania i odpowiedzi)
+tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-uncased")
+model = TFAutoModelForMaskedLM.from_pretrained("google-bert/bert-base-uncased")
+
+# Dane treningowe
+# Train data (questions and answers)
 train_data = [
-    {"question": "Czym zajmuje się elektronika?", "answer_text": "wytwarzaniem i przetwarzaniem sygnałów w postaci prądów i napięć elektrycznych lub pól elektromagnetycznych"},
-    {"question": "Kto wynalazł triodę?", "answer_text": "Lee De Forest"},
-    {"question": "Jakie są typy układów elektronicznych?", "answer_text": "układy elektroniczne analogowe, układy cyfrowe kombinacyjne, układy cyfrowe sekwencyjne"},
-    {"question": "Jakie elementy są używane w konstrukcji urządzeń elektronicznych?", "answer_text": "elementy aktywne, elementy bierne, elementy akustoelektroniczne, elementy optoelektroniczne, elementy fotoniczne"},
-    {"question": "Co to jest mikroelektronika?", "answer_text": "mikroelektronika, zob. też nanoelektronika"},
-    {"question": "Czym jest kompatybilność elektromagnetyczna?", "answer_text": "kompatybilność elektromagnetyczna"},
-    {"question": "Kto wynalazł triodę i w którym roku?", "answer_text": "Lee De Forest wynalazł triodę około 1906 roku"},
-    {"question": "Jakie dziedziny zawdzięczają rozwój elektronice?", "answer_text": "fizyce i matematyce"},
-    {"question": "Jakie są elementy aktywne używane w elektronice?", "answer_text": "półprzewodnikowe (tranzystory, tyrystory, układy scalone, diody półprzewodnikowe itp.), lampy próżniowe (diody, triody, pentody itd.)"},
-    {"question": "Jakie są elementy bierne używane w elektronice?", "answer_text": "rezystory, kondensatory, cewki"},
-    {"question": "Jakie są elementy optoelektroniczne?", "answer_text": "lasery, światłowody, detektory promieniowania"}
+    {
+        "question": "Czym zajmuje się elektronika?",
+        "answer_text": "Elektronika zajmuje się wytwarzaniem i przetwarzaniem sygnałów w postaci prądów, napięć elektrycznych oraz pól elektromagnetycznych."
+    },
+    {
+        "question": "Jakie są podstawowe elementy elektroniczne?",
+        "answer_text": "Podstawowe elementy elektroniczne to elementy aktywne (tranzystory, diody, układy scalone), bierne (rezystory, kondensatory, cewki) oraz optoelektroniczne i fotoniczne."
+    },
+    {
+        "question": "Czym różni się elektronika od elektrotechniki?",
+        "answer_text": "Elektronika zajmuje się przetwarzaniem sygnałów, a elektrotechnika głównie zagadnieniami związanymi z energią elektryczną."
+    },
+    {
+        "question": "Kiedy nastąpiło wyodrębnienie elektroniki jako dziedziny nauki?",
+        "answer_text": "Elektronika wyodrębniła się jako osobna dziedzina około 1906 roku, gdy Lee De Forest wynalazł triodę."
+    },
+    {
+        "question": "Jakie są główne zastosowania elektroniki?",
+        "answer_text": "Elektronika znajduje zastosowanie w telekomunikacji, inżynierii komputerowej, automatyce, medycynie, przemyśle oraz w technologiach mikrofalowych."
+    },
+    {
+        "question": "Jakie są główne typy układów elektronicznych?",
+        "answer_text": "Główne typy układów elektronicznych to układy analogowe (liniowe i nieliniowe) oraz cyfrowe (kombinacyjne i sekwencyjne)."
+    },
+    {
+        "question": "Co to jest mikroelektronika?",
+        "answer_text": "Mikroelektronika to dział elektroniki zajmujący się projektowaniem i produkcją układów scalonych oraz miniaturyzacją komponentów elektronicznych."
+    },
+    {
+        "question": "Jakie są kluczowe wynalazki w historii elektroniki?",
+        "answer_text": "Do kluczowych wynalazków w historii elektroniki należą trioda, tranzystor, układy scalone oraz technologie półprzewodnikowe."
+    },
+    {
+        "question": "Jakie są różnice między układami analogowymi a cyfrowymi?",
+        "answer_text": "Układy analogowe przetwarzają sygnały ciągłe, natomiast układy cyfrowe operują na sygnałach dyskretnych, reprezentowanych przez wartości binarne."
+    },
+    {
+        "question": "Jakie są podstawowe elementy półprzewodnikowe?",
+        "answer_text": "Podstawowe elementy półprzewodnikowe to diody, tranzystory, tyrystory oraz układy scalone."
+    },
+    {
+        "question": "Czym zajmuje się radioelektronika?",
+        "answer_text": "Radioelektronika obejmuje technologie związane z radiokomunikacją, systemami radarowymi oraz układami mikrofalowymi."
+    },
+    {
+        "question": "Jakie są zastosowania elektroniki w medycynie?",
+        "answer_text": "Elektronika medyczna obejmuje urządzenia diagnostyczne, aparaturę monitorującą oraz technologie stosowane w inżynierii biomedycznej."
+    },
+    {
+        "question": "Co to jest kompatybilność elektromagnetyczna?",
+        "answer_text": "Kompatybilność elektromagnetyczna to zdolność urządzeń elektronicznych do poprawnego działania w otoczeniu pełnym różnych sygnałów elektromagnetycznych."
+    }
 ]
 
-def prepare_training_data(data, context):
-    input_ids = []
-    attention_masks = []
-    start_positions = []
-    end_positions = []
+# Znajdowanie najlepszego fragmentu tekstu
+def find_best_passage(answer_text, article):
+    sentences = re.split(r'(?<=[.!?]) +', article)
+    best_match, score = process.extractOne(answer_text, sentences)
 
-    for entry in data:
-        question = entry["question"]
-        answer_text = entry["answer_text"]
+    if score < 50:
+        print(f"⚠️ Nie znaleziono odpowiedzi dla: {answer_text}")
+        return None
 
-        encoded = tokenizer(
-            question,
-            context,
-            truncation=True,
-            padding="max_length",
-            max_length=512,
-            return_tensors="tf",
-            return_offsets_mapping=True
-        )
+    return best_match
 
-        offsets = encoded.pop("offset_mapping")[0]
+# Znajdowanie indeksów odpowiedzi
+def find_answer_positions(answer_text, best_sentence):
+    match = re.search(re.escape(answer_text[:10]), best_sentence)  
 
-        # Elastyczne wyszukiwanie odpowiedzi
-        answer_pattern = re.compile(re.escape(answer_text.lower()), re.IGNORECASE)
-        match = answer_pattern.search(context.lower())
-
-        if match:
-            answer_start_char = match.start()
-            answer_end_char = match.end()
-            print(f"Znaleziono odpowiedź '{answer_text}' w kontekście na pozycjach {answer_start_char} - {answer_end_char}.")
-        else:
-            print(f"Odpowiedź '{answer_text}' nie znaleziona w kontekście dla pytania: '{question}'")
-            continue
-
-        token_start_index = None
-        token_end_index = None
-
-        for idx, (start_offset, end_offset) in enumerate(offsets):
-            if start_offset <= answer_start_char < end_offset:
-                token_start_index = idx
-            if start_offset < answer_end_char <= end_offset:
-                token_end_index = idx
-                break
-
-        if token_start_index is None or token_end_index is None:
-            print(f"Nie udało się znaleźć tokenów odpowiadających odpowiedzi dla pytania: '{question}'")
-            print(f"Token start index: {token_start_index}, Token end index: {token_end_index}")
-            continue
-
-        input_ids.append(encoded["input_ids"][0])
-        attention_masks.append(encoded["attention_mask"][0])
-        start_positions.append(token_start_index)
-        end_positions.append(token_end_index)
-
-    print(f"Liczba przygotowanych przykładów: {len(input_ids)}")
-    return input_ids, attention_masks, start_positions, end_positions
+    if match:
+        start_idx = match.start()
+        end_idx = start_idx + len(answer_text)
+        return start_idx, end_idx
+    
+    print(f"⚠️ Nie znaleziono dopasowania dla: {answer_text}")
+    return None, None
 
 # Przygotowanie danych treningowych
-input_ids, attention_masks, start_positions, end_positions = prepare_training_data(train_data, context)
+inputs = []
+start_positions = []
+end_positions = []
 
-if len(input_ids) == 0:
-    print("Lista input_ids jest pusta! Upewnij się, że odpowiedzi znajdują się w kontekście.")
-    exit()
+for entry in train_data:
+    best_sentence = find_best_passage(entry["answer_text"], article)
+    if not best_sentence:
+        continue
 
-# Konwersja danych do TensorFlow
-input_ids_tensor = tf.stack(input_ids)
-attention_masks_tensor = tf.stack(attention_masks)
-start_positions_tensor = tf.convert_to_tensor(start_positions)
-end_positions_tensor = tf.convert_to_tensor(end_positions)
+    encoded = tokenizer(entry["question"], best_sentence, truncation=True, padding="max_length", return_tensors="tf")
 
-# Kompilacja modelu
-optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5)
+    start_idx, end_idx = find_answer_positions(entry["answer_text"], best_sentence)
+    if start_idx is None or end_idx is None:
+        continue
+
+    inputs.append(encoded)
+    start_positions.append(start_idx)
+    end_positions.append(end_idx)
+
+if not inputs:
+    raise ValueError("❌ Brak poprawnych danych wejściowych do treningu!")
+
+input_ids = tf.concat([inp["input_ids"] for inp in inputs], axis=0)
+attention_masks = tf.concat([inp["attention_mask"] for inp in inputs], axis=0)
+
+optimizer = AdamWeightDecay(learning_rate=2e-5, weight_decay_rate=0.01)
 model.compile(optimizer=optimizer)
 
-# Trening modelu
+early_stopping = EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
+
 model.fit(
-    [input_ids_tensor, attention_masks_tensor],
-    [start_positions_tensor, end_positions_tensor],
-    epochs=3,
-    batch_size=2
+    {"input_ids": input_ids, "attention_mask": attention_masks},
+    {"start_positions": tf.convert_to_tensor(start_positions), "end_positions": tf.convert_to_tensor(end_positions)},
+    epochs=6,
+    batch_size=4,
+    callbacks=[early_stopping]
 )
 
-# Zapis modelu
-model.save_pretrained("kally/kally")
-tokenizer.save_pretrained("kally/kally")
-
-print("Model został zapisany!")
+model.save_pretrained("saved_model/Kally")
+tokenizer.save_pretrained("saved_model/Kally")
+print("✅ Model Kally został zapisany!")
