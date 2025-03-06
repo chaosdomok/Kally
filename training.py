@@ -1,19 +1,21 @@
 import os
 import re
 import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping
 from fuzzywuzzy import process
-from transformers import AutoTokenizer, TFAutoModelForMaskedLM, AdamWeightDecay
+from transformers import AutoTokenizer, TFAutoModelForQuestionAnswering, AdamWeightDecay
+
+# Wyłączanie ostrzeżeń
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 # Wczytywanie artykułu z pliku
 with open("files/elektronika.txt", 'r', encoding='utf-8') as file:
     article = file.read()
 
-tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-uncased")
-model = TFAutoModelForMaskedLM.from_pretrained("google-bert/bert-base-uncased")
+# Inicjalizacja tokenizer i modelu
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+model = TFAutoModelForQuestionAnswering.from_pretrained("bert-base-uncased")
 
 # Dane treningowe
-# Train data (questions and answers)
 train_data = [
     {
         "question": "Czym zajmuje się elektronika?",
@@ -69,28 +71,36 @@ train_data = [
     }
 ]
 
-# Znajdowanie najlepszego fragmentu tekstu
+# 🔍 Znajdowanie najlepszego fragmentu tekstu
 def find_best_passage(answer_text, article):
     sentences = re.split(r'(?<=[.!?]) +', article)
     best_match, score = process.extractOne(answer_text, sentences)
 
     if score < 50:
-        print(f"⚠️ Nie znaleziono odpowiedzi dla: {answer_text}")
+        print(f"⚠️ Słabe dopasowanie ({score}%) dla: {answer_text}")
         return None
 
+    print(f"✅ Dopasowanie ({score}%) dla: {answer_text} -> {best_match[:100]}...")
     return best_match
 
-# Znajdowanie indeksów odpowiedzi
+# 🔍 Znajdowanie indeksów odpowiedzi (ulepszone!)
 def find_answer_positions(answer_text, best_sentence):
-    match = re.search(re.escape(answer_text[:10]), best_sentence)  
+    start_idx = best_sentence.find(answer_text)
 
-    if match:
-        start_idx = match.start()
+    if start_idx != -1:
         end_idx = start_idx + len(answer_text)
         return start_idx, end_idx
     
+    # 💡 Jeśli dokładne dopasowanie się nie powiodło, szukamy podobnego fragmentu
+    words = answer_text.split()
+    for word in words:
+        if word in best_sentence:
+            start_idx = best_sentence.find(word)
+            end_idx = start_idx + len(word)
+            return start_idx, end_idx
+    
     print(f"⚠️ Nie znaleziono dopasowania dla: {answer_text}")
-    return None, None
+    return 0, 1
 
 # Przygotowanie danych treningowych
 inputs = []
@@ -102,7 +112,10 @@ for entry in train_data:
     if not best_sentence:
         continue
 
-    encoded = tokenizer(entry["question"], best_sentence, truncation=True, padding="max_length", return_tensors="tf")
+    encoded = tokenizer(
+        entry["question"], best_sentence,
+        truncation=True, padding="max_length", return_tensors="tf"
+    )
 
     start_idx, end_idx = find_answer_positions(entry["answer_text"], best_sentence)
     if start_idx is None or end_idx is None:
@@ -112,25 +125,43 @@ for entry in train_data:
     start_positions.append(start_idx)
     end_positions.append(end_idx)
 
+# Sprawdzenie, czy mamy dane do trenowania
 if not inputs:
     raise ValueError("❌ Brak poprawnych danych wejściowych do treningu!")
 
 input_ids = tf.concat([inp["input_ids"] for inp in inputs], axis=0)
 attention_masks = tf.concat([inp["attention_mask"] for inp in inputs], axis=0)
 
+# Kompilacja modelu
 optimizer = AdamWeightDecay(learning_rate=2e-5, weight_decay_rate=0.01)
-model.compile(optimizer=optimizer)
+model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy")
 
-early_stopping = EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
+start_positions = tf.convert_to_tensor(start_positions, dtype=tf.int32)
+end_positions = tf.convert_to_tensor(end_positions, dtype=tf.int32)
 
+print(f"input_ids shape: {input_ids.shape}")
+print(f"attention_masks shape: {attention_masks.shape}")
+print(f"start_positions shape: {tf.convert_to_tensor(start_positions).shape}")
+print(f"end_positions shape: {tf.convert_to_tensor(end_positions).shape}")
+
+print(f"inputs_ids: {input_ids}")
+print(f"attention_mask: {attention_masks}")
+print(f"start_positions: {start_positions}")
+print(f"end_positions: {end_positions}")
+
+print(f"start position dtype: {start_positions.dtype}")
+print(f"end position dtype: {end_positions.dtype}")
+
+# Trenowanie modelu
 model.fit(
-    {"input_ids": input_ids, "attention_mask": attention_masks},
-    {"start_positions": tf.convert_to_tensor(start_positions), "end_positions": tf.convert_to_tensor(end_positions)},
-    epochs=6,
+    (input_ids, attention_masks),
+    (start_positions, end_positions),
+    validation_split=0.2,
+    epochs=8,
     batch_size=4,
-    callbacks=[early_stopping]
 )
 
+# Zapisywanie modelu
 model.save_pretrained("saved_model/Kally")
 tokenizer.save_pretrained("saved_model/Kally")
 print("✅ Model Kally został zapisany!")
